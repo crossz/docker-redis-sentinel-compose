@@ -12,6 +12,14 @@ sentinel:
     - redismaster
     - redisslave
     - redisconfig
+sentinel2:
+  build: sentinel
+  ports:
+    - "26579:26379"
+  links:
+    - redismaster
+    - redisslave
+    - redisconfig
 redisconfig:
   build: redis-config
   links:

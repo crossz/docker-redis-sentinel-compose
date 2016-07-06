@@ -127,7 +127,7 @@ docker unpause rediscluster_redismaster_1
 And get the sentinel infomation with following commands
 
 ```
-SENTINEL_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' rediscluster_sentinel_1)
+SENTINEL_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompse_sentinel_1)
 redis-cli -h $SENTINEL_IP -p 26379 info Sentinel
 ```
 

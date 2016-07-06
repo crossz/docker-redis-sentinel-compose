@@ -6,6 +6,8 @@ redisslave:
     - redismaster
 sentinel:
   build: sentinel
+  ports:
+    - "26379:26379"
   links:
     - redismaster
     - redisslave

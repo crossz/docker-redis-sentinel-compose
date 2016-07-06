@@ -122,9 +122,18 @@ Execut the test scripts
 ```
 ./test.sh
 ```
-to simulate stop and recover the Redis master. And you will see the master is switched to slave automatically. 
+This script simulate pause/unpause the Redis master. Especially for the quorum. (here more tests need to be done manulaly)
 
-Or, you can do the test manually to pause/unpause redis server through
+The configuration:
+
+a) with quorum of 2 (3 sentinels) makes the test.sh go through redis master automatically switch. However, quorum of 1 will not. Try it.
+
+b) with quorum of 2 (1 sentinels): no switch, but with status=down only
+
+c) with quorum of 1 (whatever X sentinels): automatically switch.
+
+Also manual simulation about  stop and recover the Redis master. And you will see the master is switched to slave automatically. 
+
 
 ```
 docker pause rediscluster_redismaster_1

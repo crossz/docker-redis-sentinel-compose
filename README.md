@@ -93,7 +93,7 @@ Scale out the instance number of sentinel
 
 
 ```
-~~docker-compose scale sentinel=3~~
+~~ docker-compose scale sentinel=3 ~~
 ```
 
 Check the status of redis cluster:
@@ -112,8 +112,8 @@ dockerredissentinelcompose_redisconfig_1   /entrypoint.sh /bin/sh -c  ...   Exit
 dockerredissentinelcompose_redismaster_1   /entrypoint.sh redis-server      Up       6379/tcp  
 dockerredissentinelcompose_redisslave_1    /entrypoint.sh redis-server      Up       6379/tcp  
 dockerredissentinelcompose_sentinel_1      redis-sentinel /etc/redis/ ...   Up       26379/tcp 
-~~rediscluster_sentinel_2      redis-sentinel /etc/redis/ ...   Up       26379/tcp ~~
-~~rediscluster_sentinel_3      redis-sentinel /etc/redis/ ...   Up       26379/tcp ~~
+~~ rediscluster_sentinel_2      redis-sentinel /etc/redis/ ...   Up       26379/tcp ~~
+~~ rediscluster_sentinel_3      redis-sentinel /etc/redis/ ...   Up       26379/tcp ~~
 ```
 
 
@@ -133,7 +133,7 @@ docker unpause rediscluster_redismaster_1
 And get the sentinel infomation with following commands
 
 ```
-SENTINEL_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompse_sentinel_1)
+SENTINEL_IP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | grep -v '172')
 redis-cli -h $SENTINEL_IP -p 26479 info Sentinel
 ```
 

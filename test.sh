@@ -11,18 +11,14 @@ echo ------------------------------------------------
 docker-compose run --rm redismaster redis-cli -h $SENTINEL_IP -p 26479 info Sentinel
 
 echo ------------------------------------------------
-echo Stop redis master
+echo Pause redis master
 docker pause dockerredissentinelcompse_redismaster_1
 sleep 5
 echo Current infomation of sentinel
 docker-compose run --rm redismaster redis-cli -h $SENTINEL_IP -p 26479 info Sentinel
 
-sleep 5
-echo Current infomation of sentinel again: to check the status and master
-docker-compose run --rm redismaster redis-cli -h $SENTINEL_IP -p 26479 info Sentinel
-
 echo ------------------------------------------------
-echo Restart Redis master
+echo Unpause Redis master
 docker unpause dockerredissentinelcompse_redismaster_1
 sleep 5
 echo Current infomation of sentinel

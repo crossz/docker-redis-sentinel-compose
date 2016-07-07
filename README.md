@@ -126,9 +126,9 @@ This script simulate pause/unpause the Redis master. Especially for the quorum. 
 
 The configuration:
 
-a) with quorum of 2 (3 sentinels) makes the test.sh go through redis master automatically switch. However, quorum of 1 will not. Try it.
+a) with quorum of 2 (3 sentinels) makes the test.sh go through redis master automatically switch.
 
-b) with quorum of 2 (1 sentinels): no switch, but with status=down only
+b) with quorum of 2 (1 sentinels): no switch, but with status=down only; even stop can not make it switch.
 
 c) with quorum of 1 (whatever X sentinels): automatically switch.
 

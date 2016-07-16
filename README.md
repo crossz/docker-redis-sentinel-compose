@@ -149,8 +149,8 @@ redis-cli -h $SENTINEL_IP -p 26479 info Sentinel
 Check the master and slave info about replication:
 
 ```
-MASERT_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompse_redismaster_1)
-SLAVE_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompse_redisslave_1)
+MASERT_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redismaster_1)
+SLAVE_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redisslave_1)
 
 redis-cli -h $MASERT_IP -p 6379 info replication
 redis-cli -h $SLAVE_IP -p 6379 info replication

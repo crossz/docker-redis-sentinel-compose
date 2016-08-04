@@ -19,7 +19,6 @@ sentinel1:
   links:
     - redismaster
     - redisslave
-    - redisconfig
 sentinel2:
   build: sentinel
   ports:
@@ -27,7 +26,6 @@ sentinel2:
   links:
     - redismaster
     - redisslave
-    - redisconfig
 redisconfig:
   build: redis-config
   links:

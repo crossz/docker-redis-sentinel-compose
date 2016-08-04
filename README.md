@@ -4,6 +4,7 @@
 Using Docker Compose to setup a redis cluster for testing sentinel failover.
 
 This project is inspired by the project of [https://github.com/mdevilliers/docker-rediscluster][1]
+and [https://github.com/AliyunContainerService/redis-cluster]
 
 
 ## Prerequisite
@@ -26,22 +27,40 @@ redismaster:
   image: redis:3.2
 redisslave:
   image: redis:3.2
-  links:
-    - redismaster
+##  links:
+##    - redismaster
 sentinel:
   build: sentinel
   ports:
     - "26479:26379"
   links:
     - redismaster
-    - redisslave
-    - redisconfig
+##    - redisslave
+##    - redisconfig
+sentinel1:
+  build: sentinel
+  ports:
+    - "26579:26379"
+  links:
+    - redismaster
+##    - redisslave
+sentinel2:
+  build: sentinel
+  ports:
+    - "26679:26379"
+  links:
+    - redismaster
+##    - redisslave
 redisconfig:
   build: redis-config
   links:
     - redismaster
     - redisslave
+
 ```
+
+here, the ## commented lines existing or not doesn't affect these services.
+
 
 There are following nodes in the cluster,
 
@@ -167,9 +186,12 @@ docker rm -f `docker ps -qa -f name=redis`
 
 ## References
 
+[https://github.com/AliyunContainerService/redis-cluster] [3]
+
 [https://github.com/mdevilliers/docker-rediscluster][1]
 
 [https://registry.hub.docker.com/u/joshula/redis-sentinel/] [2]
+
 
 [1]: https://github.com/mdevilliers/docker-rediscluster
 [2]: https://registry.hub.docker.com/u/joshula/redis-sentinel/

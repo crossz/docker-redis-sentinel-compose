@@ -113,6 +113,7 @@ Scale out the instance number of sentinel
 
 ```
 ~~ docker-compose scale sentinel=3 ~~
+docker-compose scale redisslave=3
 ```
 
 Check the status of redis cluster:
@@ -126,13 +127,21 @@ docker-compose ps
 The result is 
 
 ```
-Name                         Command                          State    Ports   
-dockerredissentinelcompose_redisconfig_1   /entrypoint.sh /bin/sh -c  ...   Exit 0             
-dockerredissentinelcompose_redismaster_1   /entrypoint.sh redis-server      Up       6379/tcp  
-dockerredissentinelcompose_redisslave_1    /entrypoint.sh redis-server      Up       6379/tcp  
-dockerredissentinelcompose_sentinel_1      redis-sentinel /etc/redis/ ...   Up       26379/tcp 
+                  Name                                Command               State             Ports           
+-------------------------------------------------------------------------------------------------------------
+dockerredissentinelcompose_redisconfig_1   docker-entrypoint.sh /bin/ ...   Exit 0                            
+dockerredissentinelcompose_redismaster_1   docker-entrypoint.sh redis ...   Up       6379/tcp                 
+dockerredissentinelcompose_redisslave_1    docker-entrypoint.sh redis ...   Up       6379/tcp                 
+dockerredissentinelcompose_redisslave_2    docker-entrypoint.sh redis ...   Up       6379/tcp                 
+dockerredissentinelcompose_redisslave_3    docker-entrypoint.sh redis ...   Up       6379/tcp                 
+dockerredissentinelcompose_sentinel1_1     redis-sentinel /etc/redis/ ...   Up       0.0.0.0:26579->26379/tcp 
+dockerredissentinelcompose_sentinel2_1     redis-sentinel /etc/redis/ ...   Up       0.0.0.0:26679->26379/tcp 
+dockerredissentinelcompose_sentinel_1      redis-sentinel /etc/redis/ ...   Up       0.0.0.0:26479->26379/tcp 
+
 ~~ rediscluster_sentinel_2      redis-sentinel /etc/redis/ ...   Up       26379/tcp ~~
 ~~ rediscluster_sentinel_3      redis-sentinel /etc/redis/ ...   Up       26379/tcp ~~
+
+
 ```
 
 
@@ -168,13 +177,24 @@ redis-cli -h $SENTINEL_IP -p 26479 info Sentinel
 Check the master and slave info about replication:
 
 ```
-MASERT_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redismaster_1)
+MASTER_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redismaster_1)
 SLAVE_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redisslave_1)
 
-redis-cli -h $MASERT_IP -p 6379 info replication
+redis-cli -h $MASTER_IP -p 6379 info replication
 redis-cli -h $SLAVE_IP -p 6379 info replication
 
+
+## to add slavof relation for salve2 and slave3
+SLAVE_IP2=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redisslave_2)
+SLAVE_IP3=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redisslave_3)
+
+redis-cli -h $SLAVE_IP2 -p 6379 slaveof $MASERT_IP 6379
+redis-cli -h $SLAVE_IP3 -p 6379 slaveof $MASERT_IP 6379
+
 ```
+
+
+
 
 
 
@@ -199,7 +219,3 @@ docker rm -f `docker ps -qa -f name=redis`
 [4]: https://www.docker.com
 
 
-## Contributors
-
-* Li Yi (<denverdino@gmail.com>)
-* Ty Alexander (<ty.alexander@gmail.com>)

@@ -1,0 +1,34 @@
+redismaster:
+  image: redis:3.2
+redisslave:
+  image: redis:3.2
+##  links:
+##    - redismaster
+sentinel:
+  build: sentinel
+  ports:
+    - "26479:26379"
+  links:
+    - redismaster
+##    - redisslave
+##    - redisconfig
+sentinel1:
+  build: sentinel
+  ports:
+    - "26579:26379"
+  links:
+    - redismaster
+##    - redisslave
+sentinel2:
+  build: sentinel
+  ports:
+    - "26679:26379"
+  links:
+    - redismaster
+##    - redisslave
+redisconfig:
+  build: redis-config
+  links:
+    - redismaster
+    - redisslave
+

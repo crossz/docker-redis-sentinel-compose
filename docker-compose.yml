@@ -1,34 +1,52 @@
-redismaster:
-  image: redis:3.2
-redisslave:
-  image: redis:3.2
-##  links:
-##    - redismaster
-sentinel:
-  build: sentinel
-  ports:
-    - "26479:26379"
-  links:
-    - redismaster
-##    - redisslave
-##    - redisconfig
-sentinel1:
-  build: sentinel
-  ports:
-    - "26579:26379"
-  links:
-    - redismaster
-##    - redisslave
-sentinel2:
-  build: sentinel
-  ports:
-    - "26679:26379"
-  links:
-    - redismaster
-##    - redisslave
-redisconfig:
-  build: redis-config
-  links:
-    - redismaster
-    - redisslave
+version: '2'
 
+services:
+  redismaster:
+    networks:
+      - back
+    image: redis:3.2
+  redisslave:
+    networks:
+      - back
+    image: redis:3.2
+  ##  links:
+  ##    - redismaster
+  sentinel:
+    build: sentinel
+    networks:
+      - back
+    ports:
+      - "26479:26379"
+  #  links:
+  #    - redismaster
+  ##    - redisslave
+  ##    - redisconfig
+  sentinel1:
+    build: sentinel
+    networks:
+      - back
+    ports:
+      - "26579:26379"
+  #  links:
+  #    - redismaster
+  ##    - redisslave
+  sentinel2:
+    build: sentinel
+    networks:
+      - back
+    ports:
+      - "26679:26379"
+  #  links:
+  #    - redismaster
+  ##    - redisslave
+  redisconfig:
+    build: redis-config
+    networks:
+      - back
+  #  links:
+  #    - redismaster
+  #    - redisslave
+  
+networks:
+  back:
+    driver: bridge

@@ -1,52 +1,24 @@
 version: '2'
 
 services:
-  redismaster:
-    networks:
-      - back
-    image: redis:3.2
-  redisslave:
-    networks:
-      - back
-    image: redis:3.2
-  ##  links:
-  ##    - redismaster
+  master:
+    image: redis:3
+    command: redis-server --requirepass 12345678 --masterauth 12345678
+  slave:
+    image: redis:3
+    command: redis-server --requirepass 12345678 --masterauth 12345678
+    links:
+      - master:redis-master
   sentinel:
-    build: sentinel
-    networks:
-      - back
-    ports:
-      - "26479:26379"
-  #  links:
-  #    - redismaster
-  ##    - redisslave
-  ##    - redisconfig
-  sentinel1:
-    build: sentinel
-    networks:
-      - back
-    ports:
-      - "26579:26379"
-  #  links:
-  #    - redismaster
-  ##    - redisslave
-  sentinel2:
-    build: sentinel
-    networks:
-      - back
-    ports:
-      - "26679:26379"
-  #  links:
-  #    - redismaster
-  ##    - redisslave
-  redisconfig:
-    build: redis-config
-    networks:
-      - back
-  #  links:
-  #    - redismaster
-  #    - redisslave
-  
-networks:
-  back:
-    driver: bridge
+    build: 
+      context: sentinel
+      args: 
+        - PW=12345678
+        - QUORUM=1
+    environment:
+      - SENTINEL_DOWN_AFTER=5000
+      - SENTINEL_FAILOVER=5000
+    links:
+      - master:redis-master
+      - slave
+

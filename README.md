@@ -1,95 +1,75 @@
 # redis-cluster 
 **Redis cluster with Docker Compose** 
 
-Using Docker Compose to setup a redis cluster for testing sentinel failover.
+Using Docker Compose to setup a redis cluster with sentinel.
 
 This project is inspired by the project of [https://github.com/mdevilliers/docker-rediscluster][1]
-and [https://github.com/AliyunContainerService/redis-cluster]
-
 
 ## Prerequisite
 
 Install [Docker][4] and [Docker Compose][3] in testing environment
 
-Optional: 
-Install the redis-cli. E.g. with following command in Ubuntu 
-
-```
-apt-get install redis-server
-```
 
 ## Docker Compose template of Redis cluster
 
 The tempalte defines the topology of the Redis cluster
 
 ```
-redismaster:
-  image: redis:3.2
-redisslave:
-  image: redis:3.2
-##  links:
-##    - redismaster
+master:
+  image: redis:3
+slave:
+  image: redis:3
+  command: redis-server --slaveof redis-master 6379
+  links:
+    - master:redis-master
 sentinel:
   build: sentinel
-  ports:
-    - "26479:26379"
+  environment:
+    - SENTINEL_DOWN_AFTER=5000
+    - SENTINEL_FAILOVER=5000    
   links:
-    - redismaster
-##    - redisslave
-##    - redisconfig
-sentinel1:
-  build: sentinel
-  ports:
-    - "26579:26379"
-  links:
-    - redismaster
-##    - redisslave
-sentinel2:
-  build: sentinel
-  ports:
-    - "26679:26379"
-  links:
-    - redismaster
-##    - redisslave
-redisconfig:
-  build: redis-config
-  links:
-    - redismaster
-    - redisslave
-
+    - master:redis-master
+    - slave
 ```
 
-here, the ## commented lines existing or not doesn't affect these services.
+There are following services in the cluster,
 
-
-There are following nodes in the cluster,
-
-* redismaster: Redis master
-* redisslave:  Redis slave
-* sentinel:    Sentinel instance
-* redisconfig: Redis CLI to config the master/slave which will exit after configuraion
+* master: Redis master
+* slave:  Redis slave
+* sentinel: Redis sentinel
 
 
 The sentinels are configured with a "mymaster" instance with the following properties -
 
 ```
-sentinel monitor mymaster redismaster 6379 2
-sentinel down-after-milliseconds mymaster 1000
+sentinel monitor mymaster redis-master 6379 2
+sentinel down-after-milliseconds mymaster 5000
 sentinel parallel-syncs mymaster 1
-sentinel failover-timeout mymaster 1000
+sentinel failover-timeout mymaster 5000
 ```
 
 The details could be found in sentinel/sentinel.conf
+
+The default values of the environment variables for Sentinel are as following
+
+* SENTINEL_QUORUM: 2
+* SENTINEL_DOWN_AFTER: 30000
+* SENTINEL_FAILOVER: 180000
 
 
 
 ## Play with it
 
+Build the sentinel Docker image
+
+```
+docker-compose build
+```
 
 Start the redis cluster
 
 ```
-docker-compose up
+docker-compose up -d
 ```
 
 Check the status of redis cluster
@@ -101,24 +81,26 @@ docker-compose ps
 The result is 
 
 ```
-Name                         Command                          State    Ports   
-dockerredissentinelcompose_redisconfig_1   /entrypoint.sh /bin/sh -c  ...   Exit 0             
-dockerredissentinelcompose_redismaster_1   /entrypoint.sh redis-server      Up       6379/tcp  
-dockerredissentinelcompose_redisslave_1    /entrypoint.sh redis-server      Up       6379/tcp  
-dockerredissentinelcompose_sentinel_1      redis-sentinel /etc/redis/ ...   Up       26479/tcp
+         Name                        Command               State          Ports        
+--------------------------------------------------------------------------------------
+rediscluster_master_1     docker-entrypoint.sh redis ...   Up      6379/tcp            
+rediscluster_sentinel_1   docker-entrypoint.sh redis ...   Up      26379/tcp, 6379/tcp 
+rediscluster_slave_1      docker-entrypoint.sh redis ...   Up      6379/tcp     
 ```
 
 Scale out the instance number of sentinel
 
-
 ```
-~~ docker-compose scale sentinel=3 ~~
-docker-compose scale redisslave=3
+docker-compose scale sentinel=3
 ```
 
-Check the status of redis cluster:
+Scale out the instance number of slaves
 
-Due to port forwarding assign in the docker-compose.yml, it could not scale.
+```
+docker-compose scale slave=2
+```
+
+Check the status of redis cluster
 
 ```
 docker-compose ps
@@ -127,95 +109,51 @@ docker-compose ps
 The result is 
 
 ```
-                  Name                                Command               State             Ports           
--------------------------------------------------------------------------------------------------------------
-dockerredissentinelcompose_redisconfig_1   docker-entrypoint.sh /bin/ ...   Exit 0                            
-dockerredissentinelcompose_redismaster_1   docker-entrypoint.sh redis ...   Up       6379/tcp                 
-dockerredissentinelcompose_redisslave_1    docker-entrypoint.sh redis ...   Up       6379/tcp                 
-dockerredissentinelcompose_redisslave_2    docker-entrypoint.sh redis ...   Up       6379/tcp                 
-dockerredissentinelcompose_redisslave_3    docker-entrypoint.sh redis ...   Up       6379/tcp                 
-dockerredissentinelcompose_sentinel1_1     redis-sentinel /etc/redis/ ...   Up       0.0.0.0:26579->26379/tcp 
-dockerredissentinelcompose_sentinel2_1     redis-sentinel /etc/redis/ ...   Up       0.0.0.0:26679->26379/tcp 
-dockerredissentinelcompose_sentinel_1      redis-sentinel /etc/redis/ ...   Up       0.0.0.0:26479->26379/tcp 
-
-~~ rediscluster_sentinel_2      redis-sentinel /etc/redis/ ...   Up       26379/tcp ~~
-~~ rediscluster_sentinel_3      redis-sentinel /etc/redis/ ...   Up       26379/tcp ~~
-
-
+         Name                        Command               State          Ports        
+--------------------------------------------------------------------------------------
+rediscluster_master_1     docker-entrypoint.sh redis ...   Up      6379/tcp            
+rediscluster_sentinel_1   docker-entrypoint.sh redis ...   Up      26379/tcp, 6379/tcp 
+rediscluster_sentinel_2   docker-entrypoint.sh redis ...   Up      26379/tcp, 6379/tcp 
+rediscluster_sentinel_3   docker-entrypoint.sh redis ...   Up      26379/tcp, 6379/tcp 
+rediscluster_slave_1      docker-entrypoint.sh redis ...   Up      6379/tcp            
+rediscluster_slave_2      docker-entrypoint.sh redis ...   Up      6379/tcp            
 ```
-
-
 
 Execut the test scripts
 ```
 ./test.sh
 ```
-This script simulate pause/unpause the Redis master. Especially for the quorum. (here more tests need to be done manulaly)
+to simulate stop and recover the Redis master. And you will see the master is switched to slave automatically. 
 
-The configuration:
-
-a) with quorum of 2 (3 sentinels) makes the test.sh go through redis master automatically switch.
-
-b) with quorum of 2 (1 sentinels): no switch, but with status=down only; even stop can not make it switch.
-
-c) with quorum of 1 (whatever X sentinels): automatically switch.
-
-Also manual simulation about  stop and recover the Redis master. And you will see the master is switched to slave automatically. 
-
+Or, you can do the test manually to pause/unpause redis server through
 
 ```
-docker pause rediscluster_redismaster_1
-docker unpause rediscluster_redismaster_1
+docker pause rediscluster_master_1
+docker unpause rediscluster_master_1
 ```
 And get the sentinel infomation with following commands
 
 ```
-SENTINEL_IP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | grep -v '172')
-redis-cli -h $SENTINEL_IP -p 26479 info Sentinel
-```
-
-Check the master and slave info about replication:
-
-```
-MASTER_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redismaster_1)
-SLAVE_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redisslave_1)
-
-redis-cli -h $MASTER_IP -p 6379 info replication
-redis-cli -h $SLAVE_IP -p 6379 info replication
-
-
-## to add slavof relation for salve2 and slave3
-SLAVE_IP2=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redisslave_2)
-SLAVE_IP3=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerredissentinelcompose_redisslave_3)
-
-redis-cli -h $SLAVE_IP2 -p 6379 slaveof $MASERT_IP 6379
-redis-cli -h $SLAVE_IP3 -p 6379 slaveof $MASERT_IP 6379
-
-```
-
-
-
-
-
-
-Remove all redis related containers:
-
-```
-docker rm -f `docker ps -qa -f name=redis`
+docker exec rediscluster_sentinel_1 redis-cli -p 26379 SENTINEL get-master-addr-by-name mymaster
 ```
 
 ## References
 
-[https://github.com/AliyunContainerService/redis-cluster] [3]
-
 [https://github.com/mdevilliers/docker-rediscluster][1]
 
 [https://registry.hub.docker.com/u/joshula/redis-sentinel/] [2]
-
 
 [1]: https://github.com/mdevilliers/docker-rediscluster
 [2]: https://registry.hub.docker.com/u/joshula/redis-sentinel/
 [3]: https://docs.docker.com/compose/
 [4]: https://www.docker.com
 
+## License
+
+Apache 2.0 license 
+
+## Contributors
+
+* Li Yi (<denverdino@gmail.com>)
+* Ty Alexander (<ty.alexander@gmail.com>)
 

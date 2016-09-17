@@ -1,13 +1,10 @@
-# redis-cluster 
+# redis-sentinel on local
 **Redis cluster with Docker Compose** 
 
-Using Docker Compose to setup a redis cluster with sentinel.
+The difference from https://github.com/AliyunContainerService/redis-cluster is that 
 
-This project is inspired by the project of [https://github.com/mdevilliers/docker-rediscluster][1]
-
-## Prerequisite
-
-Install [Docker][4] and [Docker Compose][3] in testing environment
+1. the master and slave are all protected redis nodes.
+1. using ARG for docker-composer (version2) and Dockerfile to pass the passwords into the docker images related files, such sd Dockerfile, entrypoint.sh etc. Now all the parameters to tweak all in docker-compose.yml.
 
 
 ## Docker Compose template of Redis cluster
@@ -15,21 +12,30 @@ Install [Docker][4] and [Docker Compose][3] in testing environment
 The tempalte defines the topology of the Redis cluster
 
 ```
-master:
-  image: redis:3
-slave:
-  image: redis:3
-  command: redis-server --slaveof redis-master 6379
-  links:
-    - master:redis-master
-sentinel:
-  build: sentinel
-  environment:
-    - SENTINEL_DOWN_AFTER=5000
-    - SENTINEL_FAILOVER=5000    
-  links:
-    - master:redis-master
-    - slave
+version: '2'
+
+services:
+  master:
+    image: redis:3
+    command: redis-server --requirepass 12345678 --masterauth 12345678
+  slave:
+    image: redis:3
+    command: redis-server --requirepass 12345678 --masterauth 12345678
+    links:
+      - master:redis-master
+  sentinel:
+    build: 
+      context: sentinel
+      args: 
+        - PW=12345678
+        - QUORUM=1
+    environment:
+      - SENTINEL_DOWN_AFTER=5000
+      - SENTINEL_FAILOVER=5000
+    links:
+      - master:redis-master
+      - slave
+
 ```
 
 There are following services in the cluster,
@@ -147,6 +153,7 @@ docker exec rediscluster_sentinel_1 redis-cli -p 26379 SENTINEL get-master-addr-
 [2]: https://registry.hub.docker.com/u/joshula/redis-sentinel/
 [3]: https://docs.docker.com/compose/
 [4]: https://www.docker.com
+[5]: https://github.com/AliyunContainerService/redis-cluster
 
 ## License
 
